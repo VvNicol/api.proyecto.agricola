@@ -57,6 +57,18 @@
 			<version>42.7.4</version>
 		</dependency>
 	</dependencies>
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-maven-plugin</artifactId>
+            <version>${spring-boot.version}</version>
+            <configuration>
+                <mainClass>api.proyecto.controladores.ApiSpring</mainClass>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
 
 
 </project>

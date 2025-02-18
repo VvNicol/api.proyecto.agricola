@@ -7,9 +7,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import api.proyecto.modelos.UsuarioModelo;
@@ -22,21 +24,65 @@ public class ApiInicioControlador {
 
 	@Autowired
 	private UsuarioServicioApi usuarioServicioApi;
-	
+
 	@PostMapping("/registrarse")
 	public ResponseEntity<?> registrarUsuario(@RequestBody UsuarioModelo usuario) {
+		Map<String, Object> respuesta = new HashMap<>();
+		try {
+			UsuarioModelo nuevoUsuario = usuarioServicioApi.registrarUsuario(usuario);
+
+			respuesta.put("mensaje",
+					"El usuario ha sido registrado con éxito. Verifique su correo para iniciar sesión.");
+			respuesta.put("usuario", nuevoUsuario);
+			return new ResponseEntity<>(respuesta, HttpStatus.CREATED);
+		} catch (Exception e) {
+
+			respuesta.put("error", e.getMessage());
+			System.out.print(e.getMessage());
+			return new ResponseEntity<>(respuesta, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	@GetMapping("/token-correo")
+	public ResponseEntity<Map<String, Object>> tokenCorreo(@RequestParam("token") String token) {
+		Map<String, Object> respuesta = new HashMap<>();
+		try {
+			UsuarioModelo usuario = usuarioServicioApi.buscarPorToken(token);
+			if (usuario == null) {
+				respuesta.put("error", "Token no encontrado.");
+				return new ResponseEntity<>(respuesta, HttpStatus.BAD_REQUEST);
+			}
+
+			respuesta.put("token", token);
+			respuesta.put("caducidad", usuario.getTokenExpiracionFecha());
+			
+			return new ResponseEntity<>(respuesta, HttpStatus.OK);
+		} catch (Exception e) {
+			respuesta.put("error", "Error al buscar token: " + e.getMessage());
+			return new ResponseEntity<>(respuesta, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+	
+	@PostMapping("/validar-correo")
+	public ResponseEntity<Map<String, String>> validarCorreo(@RequestBody Map<String, String> request) {
+	    Map<String, String> respuesta = new HashMap<>();
 	    try {
-	        UsuarioModelo nuevoUsuario = usuarioServicioApi.registrarUsuario(usuario);
-	        Map<String, Object> response = new HashMap<>();
-	        response.put("mensaje", "El usuario ha sido registrado con éxito. Verifique su correo para iniciar sesión.");
-	        response.put("usuario", nuevoUsuario);
-	        return new ResponseEntity<>(response, HttpStatus.CREATED);
+	        String token = request.get("token");
+	        UsuarioModelo usuario = usuarioServicioApi.buscarPorToken(token);
+
+	        if (usuario == null) {
+	        	respuesta.put("error", "Token no encontrado.");
+	            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respuesta);
+	        }
+
+	        usuario.setCorreoValidado(true);
+	        usuarioServicioApi.actualizarUsuario(usuario);
+	        respuesta.put("mensaje", "Correo verificado exitosamente.");
+	        return ResponseEntity.ok(respuesta);
 	    } catch (Exception e) {
-	        Map<String, String> errorResponse = new HashMap<>();
-	        errorResponse.put("error", "Error al registrar usuario: " + e.getMessage());
-	        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+	    	respuesta.put("error", "Error al validar correo: " + e.getMessage());
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(respuesta);
 	    }
 	}
 
-	
 }

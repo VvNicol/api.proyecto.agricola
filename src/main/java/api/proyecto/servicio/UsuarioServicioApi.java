@@ -16,13 +16,17 @@ public class UsuarioServicioApi {
 
 		if (usuarioRepositorioApi.existsByCorreo(usuario.getCorreo())) {
 			throw new Exception("El correo ya está registrado.");
-		}
-
-		usuario.setRol("usuario");
-
-		usuario.setFechaRegistro(java.time.LocalDateTime.now());
+		}		
 		return usuarioRepositorioApi.save(usuario);
 
 	}
+	
+	public UsuarioModelo buscarPorToken(String token) {
+        return usuarioRepositorioApi.findByToken(token);
+    }
+    
+    public UsuarioModelo actualizarUsuario(UsuarioModelo usuario) {
+        return usuarioRepositorioApi.save(usuario);
+    }
 
 }
