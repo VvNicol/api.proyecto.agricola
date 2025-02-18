@@ -29,4 +29,9 @@ public class UsuarioServicioApi {
         return usuarioRepositorioApi.save(usuario);
     }
 
+	public UsuarioModelo buscarPorCorreo(String correo) {
+		// TODO Auto-generated method stub
+		return usuarioRepositorioApi.findByCorreo(correo);
+	}
+
 }

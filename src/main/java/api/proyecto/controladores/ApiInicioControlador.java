@@ -1,5 +1,6 @@
 package api.proyecto.controladores;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,44 +46,60 @@ public class ApiInicioControlador {
 
 	@GetMapping("/token-correo")
 	public ResponseEntity<Map<String, Object>> tokenCorreo(@RequestParam("token") String token) {
-		Map<String, Object> respuesta = new HashMap<>();
-		try {
-			UsuarioModelo usuario = usuarioServicioApi.buscarPorToken(token);
-			if (usuario == null) {
-				respuesta.put("error", "Token no encontrado.");
-				return new ResponseEntity<>(respuesta, HttpStatus.BAD_REQUEST);
-			}
+	    Map<String, Object> respuesta = new HashMap<>();
+	    try {
+	        UsuarioModelo usuario = usuarioServicioApi.buscarPorToken(token);
+	        if (usuario == null) {
+	            respuesta.put("error", "Token no encontrado.");
+	            return new ResponseEntity<>(respuesta, HttpStatus.BAD_REQUEST);
+	        }
 
-			respuesta.put("token", token);
-			respuesta.put("caducidad", usuario.getTokenExpiracionFecha());
-			
-			return new ResponseEntity<>(respuesta, HttpStatus.OK);
-		} catch (Exception e) {
-			respuesta.put("error", "Error al buscar token: " + e.getMessage());
-			return new ResponseEntity<>(respuesta, HttpStatus.INTERNAL_SERVER_ERROR);
-		}
+	        if (usuario.getTokenExpiracionFecha() == null || usuario.getTokenExpiracionFecha().isBefore(LocalDateTime.now())) {
+	            respuesta.put("error", "El token ha expirado.");
+	            return new ResponseEntity<>(respuesta, HttpStatus.BAD_REQUEST);
+	        }
+
+	        respuesta.put("token", usuario.getToken());
+	        respuesta.put("caducidad", usuario.getTokenExpiracionFecha());
+	        respuesta.put("correo", usuario.getCorreo());
+
+	        return new ResponseEntity<>(respuesta, HttpStatus.OK);
+	    } catch (Exception e) {
+	        respuesta.put("error", "Error al buscar token: " + e.getMessage());
+	        return new ResponseEntity<>(respuesta, HttpStatus.INTERNAL_SERVER_ERROR);
+	    }
 	}
+
 	
 	@PostMapping("/validar-correo")
-	public ResponseEntity<Map<String, String>> validarCorreo(@RequestBody Map<String, String> request) {
+	public ResponseEntity<Map<String, String>> validarCorreo(@RequestBody UsuarioModelo usuario) {
 	    Map<String, String> respuesta = new HashMap<>();
 	    try {
-	        String token = request.get("token");
-	        UsuarioModelo usuario = usuarioServicioApi.buscarPorToken(token);
-
-	        if (usuario == null) {
-	        	respuesta.put("error", "Token no encontrado.");
+	        // 1. Buscar usuario en la base de datos por su correo
+	        UsuarioModelo usuarioExistente = usuarioServicioApi.buscarPorCorreo(usuario.getCorreo());
+	        if (usuarioExistente == null) {
+	            respuesta.put("error", "Correo no encontrado.");
 	            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respuesta);
 	        }
 
-	        usuario.setCorreoValidado(true);
-	        usuarioServicioApi.actualizarUsuario(usuario);
+	        // 2. Marcar el correo como validado y eliminar el token
+	        usuarioExistente.setCorreoValidado(true);
+	        usuarioExistente.setToken(null);
+	        usuarioExistente.setTokenExpiracionFecha(null);
+
+	        // 3. Guardar cambios en la base de datos
+	        usuarioServicioApi.actualizarUsuario(usuarioExistente);
+
 	        respuesta.put("mensaje", "Correo verificado exitosamente.");
 	        return ResponseEntity.ok(respuesta);
 	    } catch (Exception e) {
-	    	respuesta.put("error", "Error al validar correo: " + e.getMessage());
+	        respuesta.put("error", "Error al validar correo: " + e.getMessage());
 	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(respuesta);
 	    }
 	}
+
+
+
+
 
 }
