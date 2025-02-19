@@ -98,8 +98,30 @@ public class ApiInicioControlador {
 	    }
 	}
 
+	@PostMapping("/contrasenia")
+    public ResponseEntity<Map<String, Object>> obtenerContrasenia(@RequestBody Map<String, String> request) {
+        Map<String, Object> respuesta = new HashMap<>();
+        try {
+            // 1. Obtener el correo del JSON enviado por DWP
+            String correo = request.get("correo");
 
+            // 2. Buscar el usuario en la base de datos
+            UsuarioModelo usuario = usuarioServicioApi.buscarPorCorreo(correo);
 
+            // 3. Si el usuario no existe, devolver error
+            if (usuario == null) {
+                respuesta.put("error", "Correo no encontrado.");
+                return new ResponseEntity<>(respuesta, HttpStatus.BAD_REQUEST);
+            }
 
+            // 4. Enviar la contraseña encriptada
+            respuesta.put("contrasenia", usuario.getContrasenia());
+            return new ResponseEntity<>(respuesta, HttpStatus.OK);
+
+        } catch (Exception e) {
+            respuesta.put("error", "Error al obtener la contraseña: " + e.getMessage());
+            return new ResponseEntity<>(respuesta, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
 }
