@@ -46,82 +46,100 @@ public class ApiInicioControlador {
 
 	@GetMapping("/token-correo")
 	public ResponseEntity<Map<String, Object>> tokenCorreo(@RequestParam("token") String token) {
-	    Map<String, Object> respuesta = new HashMap<>();
-	    try {
-	        UsuarioModelo usuario = usuarioServicioApi.buscarPorToken(token);
-	        if (usuario == null) {
-	            respuesta.put("error", "Token no encontrado.");
-	            return new ResponseEntity<>(respuesta, HttpStatus.BAD_REQUEST);
-	        }
+		Map<String, Object> respuesta = new HashMap<>();
+		try {
+			UsuarioModelo usuario = usuarioServicioApi.buscarPorToken(token);
+			if (usuario == null) {
+				respuesta.put("error", "Token no encontrado.");
+				return new ResponseEntity<>(respuesta, HttpStatus.BAD_REQUEST);
+			}
 
-	        if (usuario.getTokenExpiracionFecha() == null || usuario.getTokenExpiracionFecha().isBefore(LocalDateTime.now())) {
-	            respuesta.put("error", "El token ha expirado.");
-	            return new ResponseEntity<>(respuesta, HttpStatus.BAD_REQUEST);
-	        }
+			if (usuario.getTokenExpiracionFecha() == null
+					|| usuario.getTokenExpiracionFecha().isBefore(LocalDateTime.now())) {
+				respuesta.put("error", "El token ha expirado.");
+				return new ResponseEntity<>(respuesta, HttpStatus.BAD_REQUEST);
+			}
 
-	        respuesta.put("token", usuario.getToken());
-	        respuesta.put("caducidad", usuario.getTokenExpiracionFecha());
-	        respuesta.put("correo", usuario.getCorreo());
+			respuesta.put("token", usuario.getToken());
+			respuesta.put("caducidad", usuario.getTokenExpiracionFecha());
+			respuesta.put("correo", usuario.getCorreo());
 
-	        return new ResponseEntity<>(respuesta, HttpStatus.OK);
-	    } catch (Exception e) {
-	        respuesta.put("error", "Error al buscar token: " + e.getMessage());
-	        return new ResponseEntity<>(respuesta, HttpStatus.INTERNAL_SERVER_ERROR);
-	    }
+			return new ResponseEntity<>(respuesta, HttpStatus.OK);
+		} catch (Exception e) {
+			respuesta.put("error", "Error al buscar token: " + e.getMessage());
+			return new ResponseEntity<>(respuesta, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 	}
-
 	
-	@PostMapping("/validar-correo")
-	public ResponseEntity<Map<String, String>> validarCorreo(@RequestBody UsuarioModelo usuario) {
+	@PostMapping("/token-correo-actualizar")
+	public ResponseEntity<Map<String, String>> actualizarToken(@RequestBody UsuarioModelo usuario) {
 	    Map<String, String> respuesta = new HashMap<>();
 	    try {
-	        // 1. Buscar usuario en la base de datos por su correo
+	        
 	        UsuarioModelo usuarioExistente = usuarioServicioApi.buscarPorCorreo(usuario.getCorreo());
 	        if (usuarioExistente == null) {
 	            respuesta.put("error", "Correo no encontrado.");
 	            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respuesta);
 	        }
-
-	        // 2. Marcar el correo como validado y eliminar el token
-	        usuarioExistente.setCorreoValidado(true);
-	        usuarioExistente.setToken(null);
-	        usuarioExistente.setTokenExpiracionFecha(null);
-
-	        // 3. Guardar cambios en la base de datos
+	 
+	        usuarioExistente.setToken(usuario.getToken());
+	        usuarioExistente.setTokenExpiracionFecha(usuario.getTokenExpiracionFecha());
 	        usuarioServicioApi.actualizarUsuario(usuarioExistente);
 
-	        respuesta.put("mensaje", "Correo verificado exitosamente.");
+	        respuesta.put("mensaje", "Token actualizado correctamente.");
 	        return ResponseEntity.ok(respuesta);
 	    } catch (Exception e) {
-	        respuesta.put("error", "Error al validar correo: " + e.getMessage());
+	        respuesta.put("error", "Error al actualizar el token: " + e.getMessage());
 	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(respuesta);
 	    }
 	}
 
+
+	@PostMapping("/validar-correo")
+	public ResponseEntity<Map<String, String>> validarCorreo(@RequestBody UsuarioModelo usuario) {
+		Map<String, String> respuesta = new HashMap<>();
+		try {
+			// 1. Buscar usuario en la base de datos por su correo
+			UsuarioModelo usuarioExistente = usuarioServicioApi.buscarPorCorreo(usuario.getCorreo());
+			if (usuarioExistente == null) {
+				respuesta.put("error", "Correo no encontrado.");
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respuesta);
+			}
+
+			usuarioExistente.setCorreoValidado(true);
+			usuarioExistente.setToken(null);
+			usuarioExistente.setTokenExpiracionFecha(null);
+
+			// 3. Guardar cambios en la base de datos
+			usuarioServicioApi.actualizarUsuario(usuarioExistente);
+
+			respuesta.put("mensaje", "Correo verificado exitosamente.");
+			return ResponseEntity.ok(respuesta);
+		} catch (Exception e) {
+			respuesta.put("error", "Error al validar correo: " + e.getMessage());
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(respuesta);
+		}
+	}
+
 	@PostMapping("/contrasenia")
-    public ResponseEntity<Map<String, Object>> obtenerContrasenia(@RequestBody Map<String, String> request) {
-        Map<String, Object> respuesta = new HashMap<>();
-        try {
-            // 1. Obtener el correo del JSON enviado por DWP
-            String correo = request.get("correo");
+	public ResponseEntity<Map<String, Object>> obtenerUsuario(@RequestBody UsuarioModelo usuario) {
+		Map<String, Object> respuesta = new HashMap<>();
+		try {
+			UsuarioModelo usuarioExistente = usuarioServicioApi.buscarPorCorreo(usuario.getCorreo());
+			if (usuarioExistente == null) {
+				respuesta.put("error", "Correo no encontrado");
+				return new ResponseEntity<>(respuesta, HttpStatus.BAD_REQUEST);
+			}
 
-            // 2. Buscar el usuario en la base de datos
-            UsuarioModelo usuario = usuarioServicioApi.buscarPorCorreo(correo);
+			respuesta.put("contrasenia", usuarioExistente.getContrasenia());
+			respuesta.put("correoValidado", usuarioExistente.isCorreoValidado());
+			respuesta.put("rol", usuarioExistente.getRol());
 
-            // 3. Si el usuario no existe, devolver error
-            if (usuario == null) {
-                respuesta.put("error", "Correo no encontrado.");
-                return new ResponseEntity<>(respuesta, HttpStatus.BAD_REQUEST);
-            }
-
-            // 4. Enviar la contraseña encriptada
-            respuesta.put("contrasenia", usuario.getContrasenia());
-            return new ResponseEntity<>(respuesta, HttpStatus.OK);
-
-        } catch (Exception e) {
-            respuesta.put("error", "Error al obtener la contraseña: " + e.getMessage());
-            return new ResponseEntity<>(respuesta, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+			return new ResponseEntity<>(respuesta, HttpStatus.OK);
+		} catch (Exception e) {
+			respuesta.put("error", "Error al obtener usuario: " + e.getMessage());
+			return new ResponseEntity<>(respuesta, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
 
 }
