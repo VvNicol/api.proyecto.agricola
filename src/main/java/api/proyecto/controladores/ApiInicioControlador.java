@@ -18,6 +18,12 @@ import org.springframework.web.bind.annotation.RestController;
 import api.proyecto.modelos.UsuarioModelo;
 import api.proyecto.servicio.UsuarioServicioApi;
 
+/**
+ * Controlador para gestionar las operaciones de autenticación y registro de
+ * usuarios en la API.
+ * 
+ * @autor nrojlla 25022025
+ */
 @CrossOrigin
 @RestController
 @RequestMapping("/api")
@@ -26,6 +32,12 @@ public class ApiInicioControlador {
 	@Autowired
 	private UsuarioServicioApi usuarioServicioApi;
 
+	/**
+	 * Registra un nuevo usuario en el sistema.
+	 * 
+	 * @param usuario Objeto con los datos del usuario a registrar.
+	 * @return Respuesta con mensaje de éxito o error.
+	 */
 	@PostMapping("/registrarse")
 	public ResponseEntity<?> registrarUsuario(@RequestBody UsuarioModelo usuario) {
 		Map<String, Object> respuesta = new HashMap<>();
@@ -44,6 +56,12 @@ public class ApiInicioControlador {
 		}
 	}
 
+	/**
+	 * Obtiene la información del token de verificación de un usuario.
+	 * 
+	 * @param token Token de verificación enviado al usuario.
+	 * @return Información del token y correo asociado.
+	 */
 	@GetMapping("/token-correo")
 	public ResponseEntity<Map<String, Object>> tokenCorreo(@RequestParam("token") String token) {
 		Map<String, Object> respuesta = new HashMap<>();
@@ -70,31 +88,42 @@ public class ApiInicioControlador {
 			return new ResponseEntity<>(respuesta, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
-	
+
+	/**
+	 * Actualiza el token de verificación de un usuario.
+	 * 
+	 * @param usuario Objeto con el correo del usuario y el nuevo token.
+	 * @return Respuesta con mensaje de éxito o error.
+	 */
 	@PostMapping("/token-correo-actualizar")
 	public ResponseEntity<Map<String, String>> actualizarToken(@RequestBody UsuarioModelo usuario) {
-	    Map<String, String> respuesta = new HashMap<>();
-	    try {
-	        
-	        UsuarioModelo usuarioExistente = usuarioServicioApi.buscarPorCorreo(usuario.getCorreo());
-	        if (usuarioExistente == null) {
-	            respuesta.put("error", "Correo no encontrado.");
-	            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respuesta);
-	        }
-	 
-	        usuarioExistente.setToken(usuario.getToken());
-	        usuarioExistente.setTokenExpiracionFecha(usuario.getTokenExpiracionFecha());
-	        usuarioServicioApi.actualizarUsuario(usuarioExistente);
+		Map<String, String> respuesta = new HashMap<>();
+		try {
 
-	        respuesta.put("mensaje", "Token actualizado correctamente.");
-	        return ResponseEntity.ok(respuesta);
-	    } catch (Exception e) {
-	        respuesta.put("error", "Error al actualizar el token: " + e.getMessage());
-	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(respuesta);
-	    }
+			UsuarioModelo usuarioExistente = usuarioServicioApi.buscarPorCorreo(usuario.getCorreo());
+			if (usuarioExistente == null) {
+				respuesta.put("error", "Correo no encontrado.");
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respuesta);
+			}
+
+			usuarioExistente.setToken(usuario.getToken());
+			usuarioExistente.setTokenExpiracionFecha(usuario.getTokenExpiracionFecha());
+			usuarioServicioApi.actualizarUsuario(usuarioExistente);
+
+			respuesta.put("mensaje", "Token actualizado correctamente.");
+			return ResponseEntity.ok(respuesta);
+		} catch (Exception e) {
+			respuesta.put("error", "Error al actualizar el token: " + e.getMessage());
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(respuesta);
+		}
 	}
 
-
+	/**
+	 * Valida el correo electrónico de un usuario.
+	 * 
+	 * @param usuario Objeto con el correo del usuario a validar.
+	 * @return Respuesta con mensaje de éxito o error.
+	 */
 	@PostMapping("/validar-correo")
 	public ResponseEntity<Map<String, String>> validarCorreo(@RequestBody UsuarioModelo usuario) {
 		Map<String, String> respuesta = new HashMap<>();
@@ -121,6 +150,13 @@ public class ApiInicioControlador {
 		}
 	}
 
+	/**
+	 * Obtiene la información de un usuario por su correo electrónico.
+	 * 
+	 * @param usuario Objeto con el correo del usuario.
+	 * @return Respuesta con la contraseña, estado de validación del correo y rol
+	 *         del usuario.
+	 */
 	@PostMapping("/contrasenia")
 	public ResponseEntity<Map<String, Object>> obtenerUsuario(@RequestBody UsuarioModelo usuario) {
 		Map<String, Object> respuesta = new HashMap<>();

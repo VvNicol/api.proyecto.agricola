@@ -12,6 +12,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+/**
+ * 
+ * Modelo que representa las notificaciones
+ * 
+ * @autor nrojlla 25022025
+ */
 @Entity
 @Table(name = "notificaciones", schema = "agrilog")
 public class NotificacionModelo {

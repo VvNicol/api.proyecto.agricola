@@ -6,6 +6,11 @@ import org.springframework.stereotype.Component;
 import api.proyecto.modelos.UsuarioModelo;
 import api.proyecto.repositorios.UsuarioRepositorioApi;
 
+/**
+ * Servicio para la gestión de usuarios.
+ * 
+ * @autor nrojlla 25022025
+ */
 @Component
 public class UsuarioServicioApi {
 
@@ -18,7 +23,6 @@ public class UsuarioServicioApi {
 			throw new Exception("El correo ya está registrado.");
 		}		
 		return usuarioRepositorioApi.save(usuario);
-
 	}
 	
 	public UsuarioModelo buscarPorToken(String token) {
@@ -30,7 +34,7 @@ public class UsuarioServicioApi {
     }
 
 	public UsuarioModelo buscarPorCorreo(String correo) {
-		// TODO Auto-generated method stub
+	
 		return usuarioRepositorioApi.findByCorreo(correo);
 	}
 

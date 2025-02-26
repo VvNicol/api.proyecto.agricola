@@ -14,6 +14,12 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
+/**
+ * 
+ * Modelo que representa un cultivo
+ * 
+ * @autor nrojlla 25022025
+ */
 @Entity
 @Table(name = "cultivos", schema = "agrilog")
 public class CultivoModelo {

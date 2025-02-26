@@ -14,6 +14,13 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
+
+/**
+ * 
+ * Modelo que representa un usuario
+ * 
+ * @autor nrojlla 25022025
+ */
 @Entity
 @Table(name = "usuarios", schema = "agrilog")
 public class UsuarioModelo {

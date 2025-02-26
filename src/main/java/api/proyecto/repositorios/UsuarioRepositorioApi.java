@@ -5,12 +5,17 @@ import org.springframework.stereotype.Repository;
 
 import api.proyecto.modelos.UsuarioModelo;
 
+/**
+ * Repositorio para la gestión de usuarios en la base de datos.
+ * 
+ * @autor nrojlla 25022025
+ */
 @Repository
 public interface UsuarioRepositorioApi extends JpaRepository<UsuarioModelo, Long> {
 	
-    boolean existsByCorreo(String correo);
+    boolean existsByCorreo(String correo); // Verifica si un correo ya está registrado
 
-	UsuarioModelo findByToken(String token);
+	UsuarioModelo findByToken(String token); // Busca un usuario por su token
 
-	UsuarioModelo findByCorreo(String correo);
+	UsuarioModelo findByCorreo(String correo); // Busca un usuario por su correo
 }
