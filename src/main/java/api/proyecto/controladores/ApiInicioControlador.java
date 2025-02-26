@@ -137,10 +137,11 @@ public class ApiInicioControlador {
 
 			usuarioExistente.setCorreoValidado(true);
 			usuarioExistente.setToken(null);
-			usuarioExistente.setTokenExpiracionFecha(null);
+	        usuarioExistente.setTokenExpiracionFecha(null);
 
 			// 3. Guardar cambios en la base de datos
 			usuarioServicioApi.actualizarUsuario(usuarioExistente);
+			
 
 			respuesta.put("mensaje", "Correo verificado exitosamente.");
 			return ResponseEntity.ok(respuesta);
