@@ -79,6 +79,9 @@ public class UsuarioModelo {
 
 	@Column(name = "externo_id", length = 100)
 	private String externoId = "ninguno";
+	
+	@Column(name = "codigo_verificado", columnDefinition = "boolean default false")
+	private boolean codigoVerificado= false;
 
 	// Relación de uno a muchos con ParcelaModelo
 	@OneToMany(mappedBy = "usuarioId") // Relación de un usuario a muchas parcelas
@@ -330,5 +333,19 @@ public class UsuarioModelo {
 	 */
 	public void setParcelas(List<ParcelaModelo> parcelas) {
 		this.parcelas = parcelas;
+	}
+
+	/**
+	 * @return the codigoVerificado
+	 */
+	public boolean isCodigoVerificado() {
+		return codigoVerificado;
+	}
+
+	/**
+	 * @param codigoVerificado the codigoVerificado to set
+	 */
+	public void setCodigoVerificado(boolean codigoVerificado) {
+		this.codigoVerificado = codigoVerificado;
 	}
 }

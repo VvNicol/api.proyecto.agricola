@@ -3,6 +3,7 @@ package api.proyecto.controladores;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -178,5 +179,131 @@ public class ApiInicioControlador {
 			return new ResponseEntity<>(respuesta, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
+	
+	@PostMapping("/guardar-codigo")
+	public ResponseEntity<Map<String, String>> guardarCodigoRecuperacion(@RequestBody Map<String, String> request) {
+	    Map<String, String> respuesta = new HashMap<>();
+	    try {
+	        String correo = request.get("correo");
+	        int codigo = Integer.parseInt(request.get("codigo"));
+	        LocalDateTime expiracion = LocalDateTime.parse(request.get("expiracion")); // Convertir String a LocalDateTime
+
+	        UsuarioModelo usuario = usuarioServicioApi.buscarPorCorreo(correo);
+	        if (usuario == null) {
+	            respuesta.put("error", "Correo no encontrado.");
+	            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respuesta);
+	        }
+
+	        usuario.setCodigoRecuperacion(codigo);
+	        usuario.setCodigoExpiracionFecha(expiracion);
+	        usuarioServicioApi.actualizarUsuario(usuario);
+
+	        respuesta.put("mensaje", "Código de recuperación guardado correctamente.");
+	        return ResponseEntity.ok(respuesta);
+	    } catch (Exception e) {
+	        respuesta.put("error", "Error al guardar el código: " + e.getMessage());
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(respuesta);
+	    }
+	}
+
+
+	@PostMapping("/obtener-codigo")
+	public ResponseEntity<Map<String, String>> obtenerCodigo(@RequestBody Map<String, String> request) {
+	    Map<String, String> respuesta = new HashMap<>();
+	    try {
+	        String correo = request.get("correo");
+
+	        UsuarioModelo usuario = usuarioServicioApi.buscarPorCorreo(correo);
+	        if (usuario == null) {
+	            respuesta.put("error", "Correo no encontrado.");
+	            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(respuesta);
+	        }
+
+	        // 🔹 Manejo de null más claro
+	        if (Objects.isNull(usuario.getCodigoRecuperacion()) || usuario.getCodigoExpiracionFecha() == null) {
+	            respuesta.put("error", "No hay un código de recuperación activo.");
+	            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(respuesta);
+	        }
+
+	        respuesta.put("codigo", String.valueOf(usuario.getCodigoRecuperacion()));
+	        respuesta.put("expiracion", usuario.getCodigoExpiracionFecha().toString());
+
+	        return ResponseEntity.ok(respuesta);
+	    } catch (Exception e) {
+	        respuesta.put("error", "Error al obtener el código: " + e.getMessage());
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(respuesta);
+	    }
+	}
+	
+	@PostMapping("/codigo-verificar")
+	public ResponseEntity<Map<String, String>> verificarCodigo(@RequestBody Map<String, String> request) {
+	    Map<String, String> respuesta = new HashMap<>();
+	    try {
+	        String correo = request.get("correo");
+	        int codigoIngresado = Integer.parseInt(request.get("codigo"));
+
+	        UsuarioModelo usuario = usuarioServicioApi.buscarPorCorreo(correo);
+	        if (usuario == null) {
+	            respuesta.put("error", "Correo no encontrado.");
+	            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(respuesta);
+	        }
+
+	        int codigoRecuperacion = usuario.getCodigoRecuperacion();
+
+	        if (codigoIngresado != codigoRecuperacion) {
+	            respuesta.put("error", "Código incorrecto.");
+	            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respuesta);
+	        }
+
+	        if (usuario.getCodigoExpiracionFecha().isBefore(LocalDateTime.now())) {
+	            respuesta.put("error", "Código expirado.");
+	            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respuesta);
+	        }
+
+	        // ✅ Marcar el código como verificado
+	        usuario.setCodigoVerificado(true);
+	        usuarioServicioApi.actualizarUsuario(usuario);
+
+	        respuesta.put("mensaje", "Código verificado correctamente.");
+	        return ResponseEntity.ok(respuesta);
+	    } catch (Exception e) {
+	        respuesta.put("error", "Error al verificar el código: " + e.getMessage());
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(respuesta);
+	    }
+	}
+
+	@PostMapping("/cambiar-contrasenia")
+	public ResponseEntity<Map<String, String>> cambiarContrasenia(@RequestBody Map<String, String> request) {
+	    Map<String, String> respuesta = new HashMap<>();
+	    try {
+	        String correo = request.get("correo");
+	        String nuevaContrasenia = request.get("nuevaContrasenia"); // ✅ YA ESTÁ ENCRIPTADA
+
+	        UsuarioModelo usuario = usuarioServicioApi.buscarPorCorreo(correo);
+	        if (usuario == null) {
+	            respuesta.put("error", "Correo no encontrado.");
+	            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(respuesta);
+	        }
+
+	        // ✅ Guardar directamente la contraseña encriptada
+	        usuario.setContrasenia(nuevaContrasenia);
+
+	        // ✅ Desactivar el código de recuperación
+	        usuario.setCodigoRecuperacion(0);
+	        usuario.setCodigoVerificado(false);
+	        usuario.setCodigoExpiracionFecha(null);
+
+	        usuarioServicioApi.actualizarUsuario(usuario);
+
+	        respuesta.put("mensaje", "Contraseña cambiada con éxito.");
+	        return ResponseEntity.ok(respuesta);
+	    } catch (Exception e) {
+	        respuesta.put("error", "Error al cambiar la contraseña: " + e.getMessage());
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(respuesta);
+	    }
+	}
+
+
+
 
 }
