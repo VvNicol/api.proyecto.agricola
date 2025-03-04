@@ -7,12 +7,13 @@ import api.proyecto.modelos.UsuarioModelo;
 import api.proyecto.repositorios.UsuarioRepositorioApi;
 
 /**
- * Servicio para la gestión de usuarios.
+ * Servicio para la gestión de usuarios. Implementa la interfaz
+ * UsuarioInterfazApi.
  * 
  * @autor nrojlla 25022025
  */
 @Component
-public class UsuarioServicioApi {
+public class UsuarioServicioApi implements UsuarioInterfazApi {
 
 	@Autowired
 	private UsuarioRepositorioApi usuarioRepositorioApi;
@@ -21,20 +22,20 @@ public class UsuarioServicioApi {
 
 		if (usuarioRepositorioApi.existsByCorreo(usuario.getCorreo())) {
 			throw new Exception("El correo ya está registrado.");
-		}		
+		}
 		return usuarioRepositorioApi.save(usuario);
 	}
-	
+
 	public UsuarioModelo buscarPorToken(String token) {
-        return usuarioRepositorioApi.findByToken(token);
-    }
-    
-    public UsuarioModelo actualizarUsuario(UsuarioModelo usuario) {
-        return usuarioRepositorioApi.save(usuario);
-    }
+		return usuarioRepositorioApi.findByToken(token);
+	}
+
+	public UsuarioModelo actualizarUsuario(UsuarioModelo usuario) {
+		return usuarioRepositorioApi.save(usuario);
+	}
 
 	public UsuarioModelo buscarPorCorreo(String correo) {
-	
+
 		return usuarioRepositorioApi.findByCorreo(correo);
 	}
 
