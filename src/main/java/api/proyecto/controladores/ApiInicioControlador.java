@@ -2,6 +2,7 @@ package api.proyecto.controladores;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -327,5 +329,47 @@ public class ApiInicioControlador {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(respuesta);
 		}
 	}
+	
+	/**
+     * Obtiene la lista de todos los usuarios registrados.
+     * 
+     * @return Lista de usuarios o error en caso de fallo.
+     */
+    @GetMapping("/lista-usuarios")
+    public ResponseEntity<?> obtenerListaUsuarios() {
+        try {
+            List<UsuarioModelo> usuarios = usuarioServicioApi.obtenerTodosLosUsuarios();
+            return ResponseEntity.ok(usuarios);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("mensaje", "Error al obtener la lista de usuarios.");
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
 
+    /**
+     * Elimina un usuario por su correo.
+     * 
+     * @param correo Correo del usuario a eliminar.
+     * @return Mensaje de confirmación o error.
+     */
+    @DeleteMapping("/eliminar-usuario")
+    public ResponseEntity<Map<String, String>> eliminarUsuario(@RequestParam String correo) {
+        Map<String, String> respuesta = new HashMap<>();
+        try {
+            UsuarioModelo usuario = usuarioServicioApi.buscarPorCorreo(correo);
+            if (usuario == null) {
+                respuesta.put("error", "Usuario no encontrado.");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(respuesta);
+            }
+
+            usuarioServicioApi.eliminarUsuario(usuario);
+            respuesta.put("mensaje", "Usuario eliminado correctamente.");
+            return ResponseEntity.ok(respuesta);
+        } catch (Exception e) {
+            respuesta.put("error", "Error al eliminar usuario: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(respuesta);
+        }
+    }
 }

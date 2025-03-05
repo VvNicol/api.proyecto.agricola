@@ -1,5 +1,7 @@
 package api.proyecto.servicio;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -37,6 +39,14 @@ public class UsuarioServicioApi implements UsuarioInterfazApi {
 	public UsuarioModelo buscarPorCorreo(String correo) {
 
 		return usuarioRepositorioApi.findByCorreo(correo);
+	}
+
+	public void eliminarUsuario(UsuarioModelo usuario) {
+		usuarioRepositorioApi.delete(usuario);
+	}
+
+	public List<UsuarioModelo> obtenerTodosLosUsuarios() {
+		return usuarioRepositorioApi.findAll();
 	}
 
 }

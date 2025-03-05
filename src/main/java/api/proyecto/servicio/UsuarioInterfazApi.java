@@ -1,5 +1,7 @@
 package api.proyecto.servicio;
 
+import java.util.List;
+
 import api.proyecto.modelos.UsuarioModelo;
 
 /**
@@ -41,5 +43,19 @@ public interface UsuarioInterfazApi {
 	 * @return Usuario encontrado o null si no existe.
 	 */
 	public UsuarioModelo buscarPorCorreo(String correo);
+
+	/**
+	 * Obtiene todos los usuarios registrados.
+	 * 
+	 * @return Lista de usuarios.
+	 */
+	public List<UsuarioModelo> obtenerTodosLosUsuarios();
+
+	/**
+	 * Elimina un usuario de la base de datos.
+	 * 
+	 * @param usuario Usuario a eliminar.
+	 */
+	public void eliminarUsuario(UsuarioModelo usuario);
 
 }
