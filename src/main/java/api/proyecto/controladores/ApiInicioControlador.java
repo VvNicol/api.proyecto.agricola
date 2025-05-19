@@ -1,10 +1,10 @@
 package api.proyecto.controladores;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,8 +18,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import api.proyecto.modelos.CodigoModelo;
+import api.proyecto.modelos.TokenModelo;
 import api.proyecto.modelos.UsuarioModelo;
+import api.proyecto.servicio.CodigoServicioApi;
+import api.proyecto.servicio.TokenServicioApi;
 import api.proyecto.servicio.UsuarioServicioApi;
+import dwp.agrilog.dto.TokenDto;
 
 /**
  * Controlador para gestionar las operaciones de autenticación y registro de
@@ -35,6 +40,13 @@ public class ApiInicioControlador {
 	@Autowired
 	private UsuarioServicioApi usuarioServicioApi;
 
+	@Autowired
+	private TokenServicioApi tokenServicioApi;
+
+	@Autowired
+	private CodigoServicioApi codigoServicioApi;
+	
+
 	/**
 	 * Registra un nuevo usuario en el sistema.
 	 * 
@@ -42,21 +54,14 @@ public class ApiInicioControlador {
 	 * @return Respuesta con mensaje de éxito o error.
 	 */
 	@PostMapping("/registrarse")
-	public ResponseEntity<?> registrarUsuario(@RequestBody UsuarioModelo usuario) {
-		Map<String, Object> respuesta = new HashMap<>();
-		try {
-			UsuarioModelo nuevoUsuario = usuarioServicioApi.registrarUsuario(usuario);
-
-			respuesta.put("mensaje",
-					"El usuario ha sido registrado con éxito. Verifique su correo para iniciar sesión.");
-			respuesta.put("usuario", nuevoUsuario);
-			return new ResponseEntity<>(respuesta, HttpStatus.CREATED);
-		} catch (Exception e) {
-
-			respuesta.put("error", e.getMessage());
-			System.out.print(e.getMessage());
-			return new ResponseEntity<>(respuesta, HttpStatus.BAD_REQUEST);
-		}
+	public ResponseEntity<UsuarioModelo> registrarUsuario(@RequestBody UsuarioModelo usuario) {
+	    try {
+	        UsuarioModelo nuevoUsuario = usuarioServicioApi.registrarUsuario(usuario);
+	        return new ResponseEntity<>(nuevoUsuario, HttpStatus.CREATED);
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+	    }
 	}
 
 	/**
@@ -69,25 +74,30 @@ public class ApiInicioControlador {
 	public ResponseEntity<Map<String, Object>> tokenCorreo(@RequestParam("token") String token) {
 		Map<String, Object> respuesta = new HashMap<>();
 		try {
-			UsuarioModelo usuario = usuarioServicioApi.buscarPorToken(token);
-			if (usuario == null) {
+			// Ahora buscas el token directamente en la tabla TokenModelo
+			TokenModelo tokenModelo = tokenServicioApi.buscarToken(token);
+
+			if (tokenModelo == null || tokenModelo.getUsuario() == null) {
 				respuesta.put("error", "Token no encontrado.");
 				return new ResponseEntity<>(respuesta, HttpStatus.BAD_REQUEST);
 			}
 
-			if (usuario.getTokenExpiracionFecha() == null
-					|| usuario.getTokenExpiracionFecha().isBefore(LocalDateTime.now())) {
+			if (tokenModelo.getTokenExpiracionFecha() == null
+					|| tokenModelo.getTokenExpiracionFecha().isBefore(LocalDateTime.now())) {
 				respuesta.put("error", "El token ha expirado.");
 				return new ResponseEntity<>(respuesta, HttpStatus.BAD_REQUEST);
 			}
 
-			respuesta.put("token", usuario.getToken());
-			respuesta.put("caducidad", usuario.getTokenExpiracionFecha());
+			UsuarioModelo usuario = tokenModelo.getUsuario();
+
+			respuesta.put("token", tokenModelo.getToken());
+			respuesta.put("caducidad", tokenModelo.getTokenExpiracionFecha());
 			respuesta.put("correo", usuario.getCorreo());
 
 			return new ResponseEntity<>(respuesta, HttpStatus.OK);
 		} catch (Exception e) {
 			respuesta.put("error", "Error al buscar token: " + e.getMessage());
+			e.printStackTrace();
 			return new ResponseEntity<>(respuesta, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -99,27 +109,36 @@ public class ApiInicioControlador {
 	 * @return Respuesta con mensaje de éxito o error.
 	 */
 	@PostMapping("/token-correo-actualizar")
-	public ResponseEntity<Map<String, String>> actualizarToken(@RequestBody UsuarioModelo usuario) {
-		Map<String, String> respuesta = new HashMap<>();
-		try {
+	public ResponseEntity<Map<String, String>> actualizarToken(@RequestBody TokenDto tokenDto) {
+	    Map<String, String> respuesta = new HashMap<>();
+	    try {
+	        UsuarioModelo usuario = usuarioServicioApi.buscarPorId(tokenDto.getUsuarioId());
+	        if (usuario == null) {
+	            respuesta.put("error", "Usuario no encontrado.");
+	            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respuesta);
+	        }
 
-			UsuarioModelo usuarioExistente = usuarioServicioApi.buscarPorCorreo(usuario.getCorreo());
-			if (usuarioExistente == null) {
-				respuesta.put("error", "Correo no encontrado.");
-				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respuesta);
-			}
+	        TokenModelo token = tokenServicioApi.buscarPorUsuario(usuario);
 
-			usuarioExistente.setToken(usuario.getToken());
-			usuarioExistente.setTokenExpiracionFecha(usuario.getTokenExpiracionFecha());
-			usuarioServicioApi.actualizarUsuario(usuarioExistente);
+	        if (token == null) {
+	            token = new TokenModelo();
+	            token.setUsuario(usuario); // Relación obligatoria
+	        }
 
-			respuesta.put("mensaje", "Token actualizado correctamente.");
-			return ResponseEntity.ok(respuesta);
-		} catch (Exception e) {
-			respuesta.put("error", "Error al actualizar el token: " + e.getMessage());
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(respuesta);
-		}
+	        token.setToken(tokenDto.getToken());
+	        token.setTokenExpiracionFecha(tokenDto.getTokenExpiracionFecha());
+	    
+	        tokenServicioApi.guardar(token);
+
+	        respuesta.put("mensaje", "Token actualizado correctamente.");
+	        return ResponseEntity.ok(respuesta);
+	    } catch (Exception e) {
+	        e.printStackTrace(); // 🔍 Esto faltaba para mostrar el error exacto en consola
+	        respuesta.put("error", "Error al actualizar el token: " + e.getMessage());
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(respuesta);
+	    }
 	}
+
 
 	/**
 	 * Valida el correo electrónico de un usuario.
@@ -139,8 +158,11 @@ public class ApiInicioControlador {
 			}
 
 			usuarioExistente.setCorreoValidado(true);
-			usuarioExistente.setToken(null);
-			usuarioExistente.setTokenExpiracionFecha(null);
+
+			TokenModelo token = usuario.getToken();
+			if (token != null) {
+				tokenServicioApi.eliminar(token);
+			}
 
 			// 3. Guardar cambios en la base de datos
 			usuarioServicioApi.actualizarUsuario(usuarioExistente);
@@ -194,7 +216,6 @@ public class ApiInicioControlador {
 			String correo = request.get("correo");
 			int codigo = Integer.parseInt(request.get("codigo"));
 			LocalDateTime expiracion = LocalDateTime.parse(request.get("expiracion"));
-																						
 
 			UsuarioModelo usuario = usuarioServicioApi.buscarPorCorreo(correo);
 			if (usuario == null) {
@@ -202,14 +223,23 @@ public class ApiInicioControlador {
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respuesta);
 			}
 
-			//Se guarda el codigo despues de las verificaciones
-			usuario.setCodigoRecuperacion(codigo);
-			usuario.setCodigoExpiracionFecha(expiracion);
-			usuarioServicioApi.actualizarUsuario(usuario);
+			CodigoModelo codigoModelo = usuario.getCodigo();
+
+			if (codigoModelo == null) {
+				codigoModelo = new CodigoModelo();
+				codigoModelo.setUsuario(usuario);
+			}
+
+			codigoModelo.setCodigoRecuperacion(codigo);
+			codigoModelo.setCodigoExpiracionFecha(expiracion);
+			codigoModelo.setCodigoVerificado(false);
+
+			codigoServicioApi.guardar(codigoModelo);
 
 			respuesta.put("mensaje", "Código de recuperación guardado correctamente.");
 			return ResponseEntity.ok(respuesta);
 		} catch (Exception e) {
+			e.printStackTrace();
 			respuesta.put("error", "Error al guardar el código: " + e.getMessage());
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(respuesta);
 		}
@@ -234,18 +264,20 @@ public class ApiInicioControlador {
 				return ResponseEntity.status(HttpStatus.NOT_FOUND).body(respuesta);
 			}
 
-			if (Objects.isNull(usuario.getCodigoRecuperacion()) || usuario.getCodigoExpiracionFecha() == null) {
+			CodigoModelo codigo = usuario.getCodigo();
+			if (codigo == null || codigo.getCodigoRecuperacion() == 0 || codigo.getCodigoExpiracionFecha() == null) {
 				respuesta.put("error", "No hay un código de recuperación activo.");
 				return ResponseEntity.status(HttpStatus.NOT_FOUND).body(respuesta);
 			}
 
-			respuesta.put("codigo", String.valueOf(usuario.getCodigoRecuperacion()));
-			respuesta.put("expiracion", usuario.getCodigoExpiracionFecha().toString());
+			respuesta.put("codigo", String.valueOf(codigo.getCodigoRecuperacion()));
+			respuesta.put("expiracion", codigo.getCodigoExpiracionFecha().toString());
 
 			return ResponseEntity.ok(respuesta);
 
 		} catch (Exception e) {
-			respuesta.put("error", "Error al obtener el código: " + e.getMessage());
+			e.printStackTrace();
+			respuesta.put("error", "Error al obtener el código: " + e.getMessage());			
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(respuesta);
 		}
 	}
@@ -269,24 +301,30 @@ public class ApiInicioControlador {
 				return ResponseEntity.status(HttpStatus.NOT_FOUND).body(respuesta);
 			}
 
-			int codigoRecuperacion = usuario.getCodigoRecuperacion();
+			CodigoModelo codigo = usuario.getCodigo();
+			if (codigo == null) {
+				respuesta.put("error", "No hay código registrado.");
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body(respuesta);
+			}
 
-			if (codigoIngresado != codigoRecuperacion) {
+			if (codigo.getCodigoRecuperacion() != codigoIngresado) {
 				respuesta.put("error", "Código incorrecto.");
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respuesta);
 			}
 
-			if (usuario.getCodigoExpiracionFecha().isBefore(LocalDateTime.now())) {
+			if (codigo.getCodigoExpiracionFecha() == null
+					|| codigo.getCodigoExpiracionFecha().isBefore(LocalDateTime.now())) {
 				respuesta.put("error", "Código expirado.");
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respuesta);
 			}
 
-			usuario.setCodigoVerificado(true);
-			usuarioServicioApi.actualizarUsuario(usuario);
-
+			// Código válido: marcarlo como verificado
+			codigo.setCodigoVerificado(true);
+			codigoServicioApi.guardar(codigo);
 			respuesta.put("mensaje", "Código verificado correctamente.");
 			return ResponseEntity.ok(respuesta);
 		} catch (Exception e) {
+			e.printStackTrace();
 			respuesta.put("error", "Error al verificar el código: " + e.getMessage());
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(respuesta);
 		}
@@ -315,61 +353,80 @@ public class ApiInicioControlador {
 			// Guardar directamente la contraseña encriptada
 			usuario.setContrasenia(nuevaContrasenia);
 
-			// Desactivar el código de recuperación
-			usuario.setCodigoRecuperacion(0);
-			usuario.setCodigoVerificado(false);
-			usuario.setCodigoExpiracionFecha(null);
-
+			 // Desactivar código de recuperación
+	        CodigoModelo codigo = usuario.getCodigo();
+	        if (codigo != null) {
+	            codigo.setCodigoRecuperacion(0);
+	            codigo.setCodigoVerificado(false);
+	            codigo.setCodigoExpiracionFecha(null);
+	            codigoServicioApi.guardar(codigo);
+	        }
 			usuarioServicioApi.actualizarUsuario(usuario);
 
 			respuesta.put("mensaje", "Contraseña cambiada con éxito.");
 			return ResponseEntity.ok(respuesta);
 		} catch (Exception e) {
+			e.printStackTrace();
 			respuesta.put("error", "Error al cambiar la contraseña: " + e.getMessage());
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(respuesta);
 		}
 	}
-	
+
 	/**
-     * Obtiene la lista de todos los usuarios registrados.
-     * 
-     * @return Lista de usuarios o error en caso de fallo.
-     */
-    @GetMapping("/lista-usuarios")
-    public ResponseEntity<?> obtenerListaUsuarios() {
-        try {
-            List<UsuarioModelo> usuarios = usuarioServicioApi.obtenerTodosLosUsuarios();
-            return ResponseEntity.ok(usuarios);
-        } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("mensaje", "Error al obtener la lista de usuarios.");
-            error.put("error", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-        }
-    }
+	 * Obtiene la lista de todos los usuarios registrados.
+	 * 
+	 * @return Lista de usuarios o error en caso de fallo.
+	 */
+	@GetMapping("/lista-usuarios")
+	public ResponseEntity<?> obtenerListaUsuarios() {
+	    try {
+	        List<UsuarioModelo> usuarios = usuarioServicioApi.obtenerTodosLosUsuarios();
 
-    /**
-     * Elimina un usuario por su correo.
-     * 
-     * @param correo Correo del usuario a eliminar.
-     * @return Mensaje de confirmación o error.
-     */
-    @DeleteMapping("/eliminar-usuario")
-    public ResponseEntity<Map<String, String>> eliminarUsuario(@RequestParam String correo) {
-        Map<String, String> respuesta = new HashMap<>();
-        try {
-            UsuarioModelo usuario = usuarioServicioApi.buscarPorCorreo(correo);
-            if (usuario == null) {
-                respuesta.put("error", "Usuario no encontrado.");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(respuesta);
-            }
+	        List<Map<String, Object>> lista = new ArrayList<>();
+	        for (UsuarioModelo u : usuarios) {
+	            Map<String, Object> datos = new HashMap<>();
+	            datos.put("correo", u.getCorreo());
+	            datos.put("rol", u.getRol());
+	            lista.add(datos);
+	        }
 
-            usuarioServicioApi.eliminarUsuario(usuario);
-            respuesta.put("mensaje", "Usuario eliminado correctamente.");
-            return ResponseEntity.ok(respuesta);
-        } catch (Exception e) {
-            respuesta.put("error", "Error al eliminar usuario: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(respuesta);
-        }
-    }
+	        return ResponseEntity.ok(lista);
+
+	    } catch (Exception e) {
+	        Map<String, String> error = new HashMap<>();
+	        e.printStackTrace();
+	        error.put("mensaje", "Error al obtener la lista de usuarios.");
+	        error.put("error", e.getMessage());
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+	    }
+	}
+
+
+	/**
+	 * Elimina un usuario por su correo.
+	 * 
+	 * @param correo Correo del usuario a eliminar.
+	 * @return Mensaje de confirmación o error.
+	 */
+	@DeleteMapping("/eliminar-usuario")
+	public ResponseEntity<Map<String, String>> eliminarUsuario(@RequestParam String correo) {
+		Map<String, String> respuesta = new HashMap<>();
+		try {
+			UsuarioModelo usuario = usuarioServicioApi.buscarPorCorreo(correo);
+			if (usuario == null) {
+				
+				respuesta.put("error", "Usuario no encontrado.");
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body(respuesta);
+			}
+
+			usuarioServicioApi.eliminarUsuario(usuario);
+			
+			respuesta.put("mensaje", "Usuario eliminado correctamente.");
+			return ResponseEntity.ok(respuesta);
+		} catch (Exception e) {
+			e.printStackTrace();
+			respuesta.put("error", "Error al eliminar usuario: " + e.getMessage());
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(respuesta);
+		}
+	}
 }

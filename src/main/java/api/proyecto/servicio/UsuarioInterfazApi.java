@@ -21,14 +21,6 @@ public interface UsuarioInterfazApi {
 	public UsuarioModelo registrarUsuario(UsuarioModelo usuario) throws Exception;
 
 	/**
-	 * Busca un usuario por su token de verificación.
-	 *
-	 * @param token Token de verificación.
-	 * @return Usuario encontrado o null si no existe.
-	 */
-	public UsuarioModelo buscarPorToken(String token);
-
-	/**
 	 * Actualiza los datos de un usuario en la base de datos.
 	 *
 	 * @param usuario Objeto con los datos actualizados del usuario.

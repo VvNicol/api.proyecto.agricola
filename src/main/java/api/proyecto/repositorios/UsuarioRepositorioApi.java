@@ -15,7 +15,5 @@ public interface UsuarioRepositorioApi extends JpaRepository<UsuarioModelo, Long
 	
     boolean existsByCorreo(String correo); // Verifica si un correo ya está registrado
 
-	UsuarioModelo findByToken(String token); // Busca un usuario por su token
-
 	UsuarioModelo findByCorreo(String correo); // Busca un usuario por su correo
 }

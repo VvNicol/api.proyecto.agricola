@@ -10,6 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -42,46 +43,29 @@ public class UsuarioModelo {
 	@NotBlank(message = "El correo no puede estar vacío")
 	@Column(name = "correo", nullable = false, unique = true, length = 100)
 	private String correo;
-
-	@Column(name = "codigo_recuperacion")
-	private int codigoRecuperacion = 0;
-
-	@Column(name = "codigo_fecha_expiracion")
-	private LocalDateTime codigoExpiracionFecha;
-
+	
 	@Column(name = "rol")
 	private String rol;
 
 	@Column(name = "contrasenia")
 	private String contrasenia;
-
-	@Column(name = "token", length = 255)
-	private String token;
-
-	@Column(name = "token_expiracion_fecha")
-	private LocalDateTime tokenExpiracionFecha;
-
+	
 	@Column(name = "correo_validado", columnDefinition = "boolean default false")
 	private boolean correoValidado = false;
-
+	
 	@Lob
 	@Column(name = "imagen")
 	private byte[] imagen;
-
+	
 	@Column(name = "fecha_registro")
 	private LocalDateTime fechaRegistro;
-
-	@Column(name = "autenticacion_externa", nullable = false, columnDefinition = "boolean default false")
-	private Boolean autenticacionExterna = false;
-
-	@Column(name = "proveedor", length = 50)
-	private String proveedor = "ninguno";
-
-	@Column(name = "externo_id", length = 100)
-	private String externoId = "ninguno";
 	
-	@Column(name = "codigo_verificado", columnDefinition = "boolean default false")
-	private boolean codigoVerificado= false;
+	
+	@OneToOne(mappedBy = "usuario")
+    private CodigoModelo codigo;
+
+    @OneToOne(mappedBy = "usuario")
+    private TokenModelo token;
 
 	// Relación de uno a muchos con ParcelaModelo
 	@OneToMany(mappedBy = "usuarioId") // Relación de un usuario a muchas parcelas
@@ -92,10 +76,6 @@ public class UsuarioModelo {
 	public UsuarioModelo() {
 
 	}
-
-	/**
-	 * Getters y Setters
-	 */
 
 	/**
 	 * @return the usuarioId
@@ -168,34 +148,6 @@ public class UsuarioModelo {
 	}
 
 	/**
-	 * @return the codigoRecuperacion
-	 */
-	public int getCodigoRecuperacion() {
-		return codigoRecuperacion;
-	}
-
-	/**
-	 * @param codigoRecuperacion the codigoRecuperacion to set
-	 */
-	public void setCodigoRecuperacion(int codigoRecuperacion) {
-		this.codigoRecuperacion = codigoRecuperacion;
-	}
-
-	/**
-	 * @return the codigoExpiracionFecha
-	 */
-	public LocalDateTime getCodigoExpiracionFecha() {
-		return codigoExpiracionFecha;
-	}
-
-	/**
-	 * @param codigoExpiracionFecha the codigoExpiracionFecha to set
-	 */
-	public void setCodigoExpiracionFecha(LocalDateTime codigoExpiracionFecha) {
-		this.codigoExpiracionFecha = codigoExpiracionFecha;
-	}
-
-	/**
 	 * @return the contrasenia
 	 */
 	public String getContrasenia() {
@@ -210,31 +162,17 @@ public class UsuarioModelo {
 	}
 
 	/**
-	 * @return the token
+	 * @return the correoValidado
 	 */
-	public String getToken() {
-		return token;
+	public boolean isCorreoValidado() {
+		return correoValidado;
 	}
 
 	/**
-	 * @param token the token to set
+	 * @param correoValidado the correoValidado to set
 	 */
-	public void setToken(String token) {
-		this.token = token;
-	}
-
-	/**
-	 * @return the tokenExpiracionFecha
-	 */
-	public LocalDateTime getTokenExpiracionFecha() {
-		return tokenExpiracionFecha;
-	}
-
-	/**
-	 * @param tokenExpiracionFecha the tokenExpiracionFecha to set
-	 */
-	public void setTokenExpiracionFecha(LocalDateTime tokenExpiracionFecha) {
-		this.tokenExpiracionFecha = tokenExpiracionFecha;
+	public void setCorreoValidado(boolean correoValidado) {
+		this.correoValidado = correoValidado;
 	}
 
 	/**
@@ -266,59 +204,31 @@ public class UsuarioModelo {
 	}
 
 	/**
-	 * @return the autenticacionExterna
+	 * @return the codigo
 	 */
-	public Boolean getAutenticacionExterna() {
-		return autenticacionExterna;
+	public CodigoModelo getCodigo() {
+		return codigo;
 	}
 
 	/**
-	 * @param autenticacionExterna the autenticacionExterna to set
+	 * @param codigo the codigo to set
 	 */
-	public void setAutenticacionExterna(Boolean autenticacionExterna) {
-		this.autenticacionExterna = autenticacionExterna;
+	public void setCodigo(CodigoModelo codigo) {
+		this.codigo = codigo;
 	}
 
 	/**
-	 * @return the correoValidado
+	 * @return the token
 	 */
-	public boolean isCorreoValidado() {
-		return correoValidado;
+	public TokenModelo getToken() {
+		return token;
 	}
 
 	/**
-	 * @param correoValidado the correoValidado to set
+	 * @param token the token to set
 	 */
-	public void setCorreoValidado(boolean correoValidado) {
-		this.correoValidado = correoValidado;
-	}
-
-	/**
-	 * @return the proveedor
-	 */
-	public String getProveedor() {
-		return proveedor;
-	}
-
-	/**
-	 * @param proveedor the proveedor to set
-	 */
-	public void setProveedor(String proveedor) {
-		this.proveedor = proveedor;
-	}
-
-	/**
-	 * @return the externoId
-	 */
-	public String getExternoId() {
-		return externoId;
-	}
-
-	/**
-	 * @param externoId the externoId to set
-	 */
-	public void setExternoId(String externoId) {
-		this.externoId = externoId;
+	public void setToken(TokenModelo token) {
+		this.token = token;
 	}
 
 	/**
@@ -334,18 +244,6 @@ public class UsuarioModelo {
 	public void setParcelas(List<ParcelaModelo> parcelas) {
 		this.parcelas = parcelas;
 	}
+	
 
-	/**
-	 * @return the codigoVerificado
-	 */
-	public boolean isCodigoVerificado() {
-		return codigoVerificado;
-	}
-
-	/**
-	 * @param codigoVerificado the codigoVerificado to set
-	 */
-	public void setCodigoVerificado(boolean codigoVerificado) {
-		this.codigoVerificado = codigoVerificado;
-	}
 }
