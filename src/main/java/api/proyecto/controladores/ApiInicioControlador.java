@@ -9,7 +9,6 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,7 +23,6 @@ import api.proyecto.modelos.UsuarioModelo;
 import api.proyecto.servicio.CodigoServicioApi;
 import api.proyecto.servicio.TokenServicioApi;
 import api.proyecto.servicio.UsuarioServicioApi;
-import dwp.agrilog.dto.TokenDto;
 
 /**
  * Controlador para gestionar las operaciones de autenticación y registro de
@@ -32,7 +30,6 @@ import dwp.agrilog.dto.TokenDto;
  * 
  * @autor nrojlla 25022025
  */
-@CrossOrigin
 @RestController
 @RequestMapping("/api")
 public class ApiInicioControlador {
@@ -54,15 +51,18 @@ public class ApiInicioControlador {
 	 * @return Respuesta con mensaje de éxito o error.
 	 */
 	@PostMapping("/registrarse")
-	public ResponseEntity<UsuarioModelo> registrarUsuario(@RequestBody UsuarioModelo usuario) {
+	public ResponseEntity<?> registrarUsuario(@RequestBody UsuarioModelo usuario) {
+	    Map<String, String> respuesta = new HashMap<>();
 	    try {
 	        UsuarioModelo nuevoUsuario = usuarioServicioApi.registrarUsuario(usuario);
-	        return new ResponseEntity<>(nuevoUsuario, HttpStatus.CREATED);
+	        return ResponseEntity.status(HttpStatus.CREATED).body(nuevoUsuario);
 	    } catch (Exception e) {
 	        e.printStackTrace();
-	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+	        respuesta.put("error", e.getMessage());
+	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respuesta);
 	    }
 	}
+
 
 	/**
 	 * Obtiene la información del token de verificación de un usuario.
@@ -109,35 +109,41 @@ public class ApiInicioControlador {
 	 * @return Respuesta con mensaje de éxito o error.
 	 */
 	@PostMapping("/token-correo-actualizar")
-	public ResponseEntity<Map<String, String>> actualizarToken(@RequestBody TokenDto tokenDto) {
+	public ResponseEntity<Map<String, String>> actualizarToken(@RequestBody TokenModelo tokenModelo) {
 	    Map<String, String> respuesta = new HashMap<>();
 	    try {
-	        UsuarioModelo usuario = usuarioServicioApi.buscarPorId(tokenDto.getUsuarioId());
+	        if (tokenModelo.getUsuario() == null || tokenModelo.getUsuario().getUsuarioId() == null) {
+	            respuesta.put("error", "Token sin usuario válido.");
+	            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respuesta);
+	        }
+
+	        UsuarioModelo usuario = usuarioServicioApi.buscarPorId(tokenModelo.getUsuario().getUsuarioId());
 	        if (usuario == null) {
 	            respuesta.put("error", "Usuario no encontrado.");
 	            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respuesta);
 	        }
 
 	        TokenModelo token = tokenServicioApi.buscarPorUsuario(usuario);
-
 	        if (token == null) {
 	            token = new TokenModelo();
-	            token.setUsuario(usuario); // Relación obligatoria
+	            token.setUsuario(usuario);
 	        }
 
-	        token.setToken(tokenDto.getToken());
-	        token.setTokenExpiracionFecha(tokenDto.getTokenExpiracionFecha());
-	    
+	        token.setToken(tokenModelo.getToken());
+	        token.setTokenExpiracionFecha(tokenModelo.getTokenExpiracionFecha());
 	        tokenServicioApi.guardar(token);
 
 	        respuesta.put("mensaje", "Token actualizado correctamente.");
 	        return ResponseEntity.ok(respuesta);
+
 	    } catch (Exception e) {
-	        e.printStackTrace(); // 🔍 Esto faltaba para mostrar el error exacto en consola
+	        e.printStackTrace();
 	        respuesta.put("error", "Error al actualizar el token: " + e.getMessage());
 	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(respuesta);
 	    }
 	}
+
+
 
 
 	/**
@@ -195,6 +201,7 @@ public class ApiInicioControlador {
 			respuesta.put("contrasenia", usuarioExistente.getContrasenia());
 			respuesta.put("correoValidado", usuarioExistente.isCorreoValidado());
 			respuesta.put("rol", usuarioExistente.getRol());
+			respuesta.put("id", usuarioExistente.getUsuarioId());
 
 			return new ResponseEntity<>(respuesta, HttpStatus.OK);
 		} catch (Exception e) {

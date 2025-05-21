@@ -39,9 +39,6 @@ public class ParcelaModelo {
 	@Column(nullable = true)
 	private String descripcion; // Descripción de la parcela
 
-	@Column(nullable = false)
-	private int cantidad; // Cantidad asociada a la parcela
-
 	@Column(name = "fecha_registro", nullable = false)
 	private LocalDateTime fechaRegistro; // Fecha de registro de la parcela
 
@@ -53,12 +50,11 @@ public class ParcelaModelo {
 	}
 
 	// Constructor con parámetros
-	public ParcelaModelo(Long usuarioId, String nombre, String descripcion, int cantidad, LocalDateTime fechaRegistro) {
+	public ParcelaModelo(Long usuarioId, String nombre, String descripcion, LocalDateTime fechaRegistro) {
 		this.usuarioId = new UsuarioModelo(); // Aquí se asocia el usuario por medio de su ID
 		this.usuarioId.setUsuarioId(usuarioId); // Se asigna el ID del usuario
 		this.nombre = nombre;
 		this.descripcion = descripcion;
-		this.cantidad = cantidad;
 		this.fechaRegistro = fechaRegistro;
 	}
 
@@ -120,19 +116,6 @@ public class ParcelaModelo {
 		this.descripcion = descripcion;
 	}
 
-	/**
-	 * @return the cantidad
-	 */
-	public int getCantidad() {
-		return cantidad;
-	}
-
-	/**
-	 * @param cantidad the cantidad to set
-	 */
-	public void setCantidad(int cantidad) {
-		this.cantidad = cantidad;
-	}
 
 	/**
 	 * @return the fechaRegistro
