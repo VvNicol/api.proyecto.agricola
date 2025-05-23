@@ -67,6 +67,7 @@ public class CultivoModelo {
 		this.fechaRegistro = fechaRegistro;
 	}
 
+	
 	// Getters y Setters
 
 	/**
@@ -82,6 +83,8 @@ public class CultivoModelo {
 	public void setCultivoId(Long cultivoId) {
 		this.cultivoId = cultivoId;
 	}
+
+	
 
 	/**
 	 * @return the parcelaId
