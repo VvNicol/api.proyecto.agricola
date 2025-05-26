@@ -39,6 +39,8 @@ public class NotificacionModelo {
 
 	@Column(name = "fecha_mensaje", nullable = false)
 	private LocalDate fechaMensaje; // Fecha de envío del mensaje
+	
+	
 
 	public NotificacionModelo() {
 	}

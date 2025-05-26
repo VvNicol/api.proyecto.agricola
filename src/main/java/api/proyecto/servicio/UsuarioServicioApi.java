@@ -5,9 +5,12 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import api.proyecto.modelos.CultivoModelo;
 import api.proyecto.modelos.ParcelaModelo;
 import api.proyecto.modelos.UsuarioModelo;
 import api.proyecto.repositorios.CodigoRepositorioApi;
+import api.proyecto.repositorios.CultivoRepositorioApi;
+import api.proyecto.repositorios.NotificacionRepositorioApi;
 import api.proyecto.repositorios.ParcelaRepositorioApi;
 import api.proyecto.repositorios.TokenRepositorioApi;
 import api.proyecto.repositorios.UsuarioRepositorioApi;
@@ -30,9 +33,15 @@ public class UsuarioServicioApi implements UsuarioInterfazApi {
 
 	@Autowired
 	private TokenRepositorioApi tokenRepositorioApi;
+	
+	@Autowired
+	private CultivoRepositorioApi cultivoRepositorioApi;
 
 	@Autowired
 	private ParcelaRepositorioApi parcelaRepositorioApi;
+	
+	@Autowired
+	private NotificacionRepositorioApi notificacionRepositorioApi;
 
 
 	public UsuarioModelo registrarUsuario(UsuarioModelo usuario) throws Exception {
@@ -54,24 +63,36 @@ public class UsuarioServicioApi implements UsuarioInterfazApi {
 
 	@Transactional
 	public void eliminarUsuario(UsuarioModelo usuario) {
-	    // Eliminar código si existe
+	    // 1. Eliminar código y token si existen
 	    if (usuario.getCodigo() != null) {
 	        codigoRepositorioApi.delete(usuario.getCodigo());
 	    }
 
-	    // Eliminar token si existe
 	    if (usuario.getToken() != null) {
 	        tokenRepositorioApi.delete(usuario.getToken());
 	    }
 
-	    // Eliminar parcelas si existen
+	    // 2. Eliminar notificaciones de cada cultivo de cada parcela
 	    if (usuario.getParcelas() != null && !usuario.getParcelas().isEmpty()) {
 	        for (ParcelaModelo parcela : usuario.getParcelas()) {
+
+	            List<CultivoModelo> cultivos = cultivoRepositorioApi.findByParcelaId(parcela);
+	            for (CultivoModelo cultivo : cultivos) {
+	                // Eliminar notificaciones del cultivo
+	                if (cultivo.getNotificaciones() != null && !cultivo.getNotificaciones().isEmpty()) {
+	                    notificacionRepositorioApi.deleteAll(cultivo.getNotificaciones());
+	                }
+
+	                // Eliminar el cultivo
+	                cultivoRepositorioApi.delete(cultivo);
+	            }
+
+	            // 3. Eliminar la parcela
 	            parcelaRepositorioApi.delete(parcela);
 	        }
 	    }
 
-	    // Finalmente eliminar el usuario
+	    // 4. Eliminar el usuario
 	    usuarioRepositorioApi.delete(usuario);
 	}
 

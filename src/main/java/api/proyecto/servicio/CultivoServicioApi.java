@@ -1,6 +1,7 @@
 package api.proyecto.servicio;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,5 +49,21 @@ public class CultivoServicioApi {
     	}).collect(Collectors.toList());
 
     }
+
+    public boolean eliminarCultivo(Long id) {
+        Optional<CultivoModelo> cultivo = cultivoRepositorio.findById(id);
+        if (cultivo.isPresent()) {
+            cultivoRepositorio.deleteById(id);
+            return true;
+        }
+        return false;
+    }
+
+    
+    public CultivoModelo buscarPorId(Long id) {
+        Optional<CultivoModelo> resultado = cultivoRepositorio.findById(id);
+        return resultado.orElse(null);
+    }
+
 
 }
