@@ -1,5 +1,10 @@
 package api.proyectoAgricola.dto;
 
+/**
+ * DTO que representa un CodigoDto para transferencia entre la API y el DWP.
+ * 
+ * @autor nrojlla 25022025
+ */
 public class CodigoDto {
 
 	private Long usuario;

@@ -9,61 +9,68 @@ import org.springframework.stereotype.Service;
 
 import api.proyecto.modelos.CultivoModelo;
 import api.proyecto.repositorios.CultivoRepositorioApi;
+import api.proyecto.repositorios.NotificacionRepositorioApi;
 import api.proyectoAgricola.dto.CultivoDto;
 import api.proyectoAgricola.dto.ParcelaDto;
 import api.proyectoAgricola.dto.UsuarioDto;
+import jakarta.transaction.Transactional;
 
+/**
+ * Servicio que implementa CultivoInterfazApi
+ * 
+ * @author nrojlla
+ * @date 28/05/2025
+ */
 @Service
-public class CultivoServicioApi {
+public class CultivoServicioApi implements CultivoInterfazApi {
 
-    @Autowired
-    private CultivoRepositorioApi cultivoRepositorio;
+	@Autowired
+	private CultivoRepositorioApi cultivoRepositorio;
 
-    public List<CultivoDto> obtenerCultivosPorUsuario(Long idUsuario) {
-    	List<CultivoModelo> cultivos = cultivoRepositorio.buscarCultivosPorUsuario(idUsuario);
+	@Autowired
+	private NotificacionRepositorioApi notificacionRepositorioApi;
 
-    	return cultivos.stream().map(modelo -> {
-    	    ParcelaDto parcelaDto = new ParcelaDto();
+	public List<CultivoDto> obtenerCultivosPorUsuario(Long idUsuario) {
+		List<CultivoModelo> cultivos = cultivoRepositorio.buscarCultivosPorUsuario(idUsuario);
 
-    	    // Asignar datos del usuario si existen
-    	    if (modelo.getParcelaId().getUsuarioId() != null) {
-    	        UsuarioDto usuarioDto = new UsuarioDto();
-    	        usuarioDto.setUsuarioId(modelo.getParcelaId().getUsuarioId().getUsuarioId());
-    	        parcelaDto.setUsuarioId(usuarioDto);
-    	    }
+		return cultivos.stream().map(modelo -> {
+			ParcelaDto parcelaDto = new ParcelaDto();
 
-    	    parcelaDto.setParcelaId(modelo.getParcelaId().getParcelaId());
-    	    parcelaDto.setNombre(modelo.getParcelaId().getNombre());
-    	    parcelaDto.setDescripcion(modelo.getParcelaId().getDescripcion());
-    	    parcelaDto.setFechaRegistro(modelo.getParcelaId().getFechaRegistro());
+			// Asignar datos del usuario si existen
+			if (modelo.getParcelaId().getUsuarioId() != null) {
+				UsuarioDto usuarioDto = new UsuarioDto();
+				usuarioDto.setUsuarioId(modelo.getParcelaId().getUsuarioId().getUsuarioId());
+				parcelaDto.setUsuarioId(usuarioDto);
+			}
 
-    	    return new CultivoDto(
-    	        modelo.getCultivoId(),
-    	        parcelaDto,
-    	        modelo.getNombre(),
-    	        modelo.getDescripcion(),
-    	        modelo.getCantidad(),
-    	        modelo.getFechaSiembra(),
-    	        modelo.getFechaRegistro()
-    	    );
-    	}).collect(Collectors.toList());
+			parcelaDto.setParcelaId(modelo.getParcelaId().getParcelaId());
+			parcelaDto.setNombre(modelo.getParcelaId().getNombre());
+			parcelaDto.setDescripcion(modelo.getParcelaId().getDescripcion());
+			parcelaDto.setFechaRegistro(modelo.getParcelaId().getFechaRegistro());
 
-    }
+			return new CultivoDto(modelo.getCultivoId(), parcelaDto, modelo.getNombre(), modelo.getDescripcion(),
+					modelo.getCantidad(), modelo.getFechaSiembra(), modelo.getFechaRegistro());
+		}).collect(Collectors.toList());
 
-    public boolean eliminarCultivo(Long id) {
-        Optional<CultivoModelo> cultivo = cultivoRepositorio.findById(id);
-        if (cultivo.isPresent()) {
-            cultivoRepositorio.deleteById(id);
-            return true;
-        }
-        return false;
-    }
+	}
 
-    
-    public CultivoModelo buscarPorId(Long id) {
-        Optional<CultivoModelo> resultado = cultivoRepositorio.findById(id);
-        return resultado.orElse(null);
-    }
+	@Transactional
+	public boolean eliminarCultivo(Long id) {
+	    Optional<CultivoModelo> cultivoOpt = cultivoRepositorio.findById(id);
 
+	    if (cultivoOpt.isPresent()) {
+	        CultivoModelo cultivo = cultivoOpt.get();
+	        notificacionRepositorioApi.deleteByCultivoId(cultivo); // Borrar notificaciones primero
+	        cultivoRepositorio.delete(cultivo);                    // Luego el cultivo
+	        return true;
+	    }
+
+	    return false;
+	}
+
+	public CultivoModelo buscarPorId(Long id) {
+		Optional<CultivoModelo> resultado = cultivoRepositorio.findById(id);
+		return resultado.orElse(null);
+	}
 
 }

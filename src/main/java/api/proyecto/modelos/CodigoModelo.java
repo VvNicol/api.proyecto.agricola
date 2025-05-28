@@ -11,6 +11,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
+/**
+ * 
+ * Modelo que representa un Codigo
+ * 
+ * @autor nrojlla 25022025
+ */
 @Entity
 @Table(name = "codigos", schema = "agrilog")
 public class CodigoModelo {

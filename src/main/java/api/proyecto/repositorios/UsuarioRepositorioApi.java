@@ -12,8 +12,20 @@ import api.proyecto.modelos.UsuarioModelo;
  */
 @Repository
 public interface UsuarioRepositorioApi extends JpaRepository<UsuarioModelo, Long> {
-	
-    boolean existsByCorreo(String correo); // Verifica si un correo ya está registrado
 
+	/**
+	 * Verifica si ya existe un usuario registrado con el correo dado.
+	 * 
+	 * @param correo Correo electrónico a verificar
+	 * @return true si existe, false si no
+	 */
+	boolean existsByCorreo(String correo); // Verifica si un correo ya está registrado
+
+	/**
+	 * Busca un usuario por su correo electrónico.
+	 * 
+	 * @param correo Correo del usuario
+	 * @return Usuario encontrado o null si no existe
+	 */
 	UsuarioModelo findByCorreo(String correo); // Busca un usuario por su correo
 }

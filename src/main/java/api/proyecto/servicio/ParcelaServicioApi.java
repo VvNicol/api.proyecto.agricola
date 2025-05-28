@@ -11,29 +11,36 @@ import api.proyecto.repositorios.ParcelaRepositorioApi;
 import api.proyectoAgricola.dto.ParcelaDto;
 import api.proyectoAgricola.dto.UsuarioDto;
 
+/**
+ * Servicio que implementa ParcelaInterfazApi.
+ * 
+ * @author nrojlla
+ * @date 28/05/2025
+ */
 @Service
-public class ParcelaServicioApi {
+public class ParcelaServicioApi implements ParcelaInterfazApi {
 
-    @Autowired
-    private ParcelaRepositorioApi parcelaRepositorio;
+	@Autowired
+	private ParcelaRepositorioApi parcelaRepositorio;
 
-    public List<ParcelaDto> obtenerParcelasPorUsuario(Long usuarioId) {
-        List<ParcelaModelo> parcelas = parcelaRepositorio.findByUsuarioId_UsuarioId(usuarioId);
+	
+	public List<ParcelaDto> obtenerParcelasPorUsuario(Long usuarioId) {
+		List<ParcelaModelo> parcelas = parcelaRepositorio.findByUsuarioId_UsuarioId(usuarioId);
 
-        return parcelas.stream().map(parcela -> {
-            ParcelaDto dto = new ParcelaDto();
-            dto.setParcelaId(parcela.getParcelaId());
+		return parcelas.stream().map(parcela -> {
+			ParcelaDto dto = new ParcelaDto();
+			dto.setParcelaId(parcela.getParcelaId());
 
-            // Creamos el UsuarioDto y le asignamos el ID
-            UsuarioDto usuarioDto = new UsuarioDto();
-            usuarioDto.setUsuarioId(parcela.getUsuarioId().getUsuarioId());
+			// Creamos el UsuarioDto y le asignamos el ID
+			UsuarioDto usuarioDto = new UsuarioDto();
+			usuarioDto.setUsuarioId(parcela.getUsuarioId().getUsuarioId());
 
-            dto.setUsuarioId(usuarioDto); // Le pasamos el objeto UsuarioDto
-            dto.setNombre(parcela.getNombre());
-            dto.setDescripcion(parcela.getDescripcion());
-            dto.setFechaRegistro(parcela.getFechaRegistro());
+			dto.setUsuarioId(usuarioDto); // Le pasamos el objeto UsuarioDto
+			dto.setNombre(parcela.getNombre());
+			dto.setDescripcion(parcela.getDescripcion());
+			dto.setFechaRegistro(parcela.getFechaRegistro());
 
-            return dto;
-        }).collect(Collectors.toList());
-    }
+			return dto;
+		}).collect(Collectors.toList());
+	}
 }

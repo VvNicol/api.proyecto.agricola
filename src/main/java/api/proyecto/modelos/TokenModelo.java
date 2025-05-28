@@ -11,6 +11,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
+/**
+ * 
+ * Modelo que representa un Token
+ * 
+ * @autor nrojlla 25022025
+ */
 @Entity
 @Table(name = "tokens", schema = "agrilog")
 public class TokenModelo {

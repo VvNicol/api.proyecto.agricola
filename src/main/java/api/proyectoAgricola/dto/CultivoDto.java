@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 /**
  * DTO que representa un cultivo para transferencia entre la API y el DWP.
  * 
- * @author nrojlla
+ * @autor nrojlla 25022025
  */
 public class CultivoDto {
 

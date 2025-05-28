@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 /**
  * DTO que representa una parcela para la comunicación entre el DWP y la API.
  * 
- * @author nrojlla
+ *  @autor nrojlla 25022025
  */
 public class ParcelaDto {
 

@@ -1,6 +1,6 @@
 package api.proyecto.modelos;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -38,21 +38,22 @@ public class NotificacionModelo {
 	private int cantidad = 0; // Cantidad asociada a la notificación
 
 	@Column(name = "fecha_mensaje", nullable = false)
-	private LocalDate fechaMensaje; // Fecha de envío del mensaje
+	private LocalDateTime  fechaMensaje; // Fecha de envío del mensaje
+	
+	@Column(name = "estado_mensaje", nullable = false)
+	private boolean estadoMensaje = false; // false = no leído, true = leído
+
+	@Column(name = "fecha_lectura")
+	private LocalDateTime fechaLectura; // Fecha y hora en que se leyó
+
 	
 	
 
 	public NotificacionModelo() {
 	}
 
-	// Constructor con parámetros
-	public NotificacionModelo(Long cultivoId, String mensaje, int cantidad, LocalDate fechaMensaje) {
-		this.cultivoId = new CultivoModelo(); // Asociar cultivo por su ID
-		this.cultivoId.setCultivoId(cultivoId); // Asignar el ID del cultivo
-		this.mensaje = mensaje;
-		this.cantidad = cantidad;
-		this.fechaMensaje = fechaMensaje;
-	}
+
+
 
 	/**
 	 * @return the notificacionId
@@ -61,12 +62,18 @@ public class NotificacionModelo {
 		return notificacionId;
 	}
 
+
+
+
 	/**
 	 * @param notificacionId the notificacionId to set
 	 */
 	public void setNotificacionId(Long notificacionId) {
 		this.notificacionId = notificacionId;
 	}
+
+
+
 
 	/**
 	 * @return the cultivoId
@@ -75,12 +82,18 @@ public class NotificacionModelo {
 		return cultivoId;
 	}
 
+
+
+
 	/**
 	 * @param cultivoId the cultivoId to set
 	 */
 	public void setCultivoId(CultivoModelo cultivoId) {
 		this.cultivoId = cultivoId;
 	}
+
+
+
 
 	/**
 	 * @return the mensaje
@@ -89,12 +102,18 @@ public class NotificacionModelo {
 		return mensaje;
 	}
 
+
+
+
 	/**
 	 * @param mensaje the mensaje to set
 	 */
 	public void setMensaje(String mensaje) {
 		this.mensaje = mensaje;
 	}
+
+
+
 
 	/**
 	 * @return the cantidad
@@ -103,6 +122,9 @@ public class NotificacionModelo {
 		return cantidad;
 	}
 
+
+
+
 	/**
 	 * @param cantidad the cantidad to set
 	 */
@@ -110,18 +132,66 @@ public class NotificacionModelo {
 		this.cantidad = cantidad;
 	}
 
+
+
+
 	/**
 	 * @return the fechaMensaje
 	 */
-	public LocalDate getFechaMensaje() {
+	public LocalDateTime getFechaMensaje() {
 		return fechaMensaje;
 	}
+
+
+
 
 	/**
 	 * @param fechaMensaje the fechaMensaje to set
 	 */
-	public void setFechaMensaje(LocalDate fechaMensaje) {
+	public void setFechaMensaje(LocalDateTime fechaMensaje) {
 		this.fechaMensaje = fechaMensaje;
 	}
+
+
+
+
+	/**
+	 * @return the estadoMensaje
+	 */
+	public boolean isEstadoMensaje() {
+		return estadoMensaje;
+	}
+
+
+
+
+	/**
+	 * @param estadoMensaje the estadoMensaje to set
+	 */
+	public void setEstadoMensaje(boolean estadoMensaje) {
+		this.estadoMensaje = estadoMensaje;
+	}
+
+
+
+
+	/**
+	 * @return the fechaLectura
+	 */
+	public LocalDateTime getFechaLectura() {
+		return fechaLectura;
+	}
+
+
+
+
+	/**
+	 * @param fechaLectura the fechaLectura to set
+	 */
+	public void setFechaLectura(LocalDateTime fechaLectura) {
+		this.fechaLectura = fechaLectura;
+	}
+
+
 
 }
