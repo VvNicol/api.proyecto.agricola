@@ -2,3 +2,4 @@ api.proyecto.controladores
 api.proyecto.modelos
 api.proyecto.repositorios
 api.proyecto.servicio
+api.proyectoAgricola.dto
